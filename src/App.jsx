@@ -24,6 +24,20 @@ export default function App() {
     }
   }, [items, isDataLoaded]);
 
+  const moveItem = (sourceCol, destCol, itemId) => {
+    const sourceData = Array.from(items[sourceCol]);
+    const destData = Array.from(items[destCol]);
+    const itemIndex = sourceData.findIndex(i => i.id === itemId);
+    const [removed] = sourceData.splice(itemIndex, 1);
+    
+    setItems({
+      ...items,
+      [sourceCol]: sourceData,
+      [destCol]: [...destData, removed]
+    });
+    Notiflix.Notify.success(`Pindah ke ${destCol === 'progress' ? 'Sedang Dibuat' : 'Siap Posting'}`);
+  };
+
   async function generateAICaption() {
     if (!GROQ_API_KEY || GROQ_API_KEY.includes("MASUKKAN")) {
       Notiflix.Notify.warning("Masukkan API Key Groq dulu!");
@@ -129,7 +143,6 @@ export default function App() {
   return (
     <div className={`min-h-screen transition-all duration-300 ${darkMode ? "bg-black" : "bg-gray-50"} flex flex-col`}>
       <div className="w-full max-w-6xl mx-auto p-4 md:p-8 flex-grow">
-        {/* Header - Responsive padding */}
         <header className="flex justify-between items-center mb-6 md:mb-10 border-b dark:border-gray-800 pb-5">
           <div className="shrink-0">
             <h1 className="text-2xl md:text-4xl font-black italic tracking-tighter" style={dynamicTextColor}>AI.PLANNER</h1>
@@ -151,7 +164,6 @@ export default function App() {
           </div>
         </header>
 
-        {/* Input Card - Full width on mobile */}
         <div className="bg-white dark:bg-gray-900 p-5 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl mb-8 md:mb-12 border dark:border-gray-800">
           <textarea 
             style={inputStyle}
@@ -171,12 +183,11 @@ export default function App() {
               <option value="Instagram">Instagram</option>
               <option value="TikTok">TikTok</option>
             </select>
-            <button onClick={generateAICaption} className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-8 py-3 md:py-4 rounded-xl font-black shadow-lg text-sm md:text-base">🤖 AI GENERATE</button>
-            <button onClick={addContent} className="w-full sm:flex-1 bg-emerald-500 hover:bg-emerald-600 text-white px-4 md:px-8 py-3 md:py-4 rounded-xl font-black shadow-lg text-sm md:text-base">➕ SIMPAN</button>
+            <button onClick={generateAICaption} className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-8 py-3 md:py-4 rounded-xl font-black shadow-lg text-sm md:text-base transition-transform active:scale-95">🤖 AI GENERATE</button>
+            <button onClick={addContent} className="w-full sm:flex-1 bg-emerald-500 hover:bg-emerald-600 text-white px-4 md:px-8 py-3 md:py-4 rounded-xl font-black shadow-lg text-sm md:text-base transition-transform active:scale-95">➕ SIMPAN</button>
           </div>
         </div>
 
-        {/* Kanban Board - Responsive Grid */}
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mb-10">
             {['idea', 'progress', 'done'].map((col) => (
@@ -212,17 +223,46 @@ export default function App() {
                               {item.text}
                             </p>
                             
-                            <div className="flex justify-between items-center">
-                              <span className="text-[9px] md:text-[10px] font-black bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 px-2 md:px-3 py-1 rounded-full uppercase">
-                                {item.platform}
-                              </span>
-                              
-                              <button 
-                                onClick={() => copyToClipboard(item.text)}
-                                className="text-[9px] md:text-[10px] font-bold text-gray-400 hover:text-blue-500 dark:hover:text-white transition-colors flex items-center gap-1"
-                              >
-                                📋 Copy
-                              </button>
+                            <div className="flex flex-col gap-4">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[9px] md:text-[10px] font-black bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 px-2 md:px-3 py-1 rounded-full uppercase">
+                                  {item.platform}
+                                </span>
+                                
+                                <button 
+                                  onClick={() => copyToClipboard(item.text)}
+                                  className="text-[9px] md:text-[10px] font-bold text-gray-400 hover:text-blue-500 dark:hover:text-white transition-colors flex items-center gap-1"
+                                >
+                                  📋 Copy
+                                </button>
+                              </div>
+
+                              <div className="flex lg:hidden gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                                {col === 'idea' && (
+                                  <button 
+                                    onClick={() => moveItem('idea', 'progress', item.id)}
+                                    className="flex-1 py-2 bg-blue-500/10 text-blue-600 rounded-lg text-[9px] font-bold uppercase"
+                                  >
+                                    Mulai Kerjakan →
+                                  </button>
+                                )}
+                                {col === 'progress' && (
+                                  <button 
+                                    onClick={() => moveItem('progress', 'done', item.id)}
+                                    className="flex-1 py-2 bg-emerald-500/10 text-emerald-600 rounded-lg text-[9px] font-bold uppercase"
+                                  >
+                                    Siap Posting →
+                                  </button>
+                                )}
+                                {col === 'done' && (
+                                  <button 
+                                    onClick={() => moveItem('done', 'progress', item.id)}
+                                    className="flex-1 py-2 bg-gray-500/10 text-gray-500 rounded-lg text-[9px] font-bold uppercase"
+                                  >
+                                    ← Revisi Lagi
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         )}
